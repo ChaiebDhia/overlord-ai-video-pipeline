@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picsou Parle - Shorts Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 h-screen flex flex-col">
+    <div class="max-w-4xl w-full mx-auto p-6 bg-white shadow-md rounded-lg mt-10 flex-grow flex flex-col">
+        <h1 class="text-3xl font-bold text-center mb-6 text-yellow-600">🦆 Picsou Parle — AI Shorts Generator</h1>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-bold mb-2">Prompt :</label>
+            <textarea id="promptInput" rows="3" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500" placeholder="Ex: Explique pourquoi il ne faut jamais prêter d'argent à ses amis..."></textarea>
+        </div>
+        
+        <button id="generateBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg transition duration-200">
+            Generate Video
+        </button>
+
+        <div id="progressContainer" class="mt-6 hidden bg-gray-50 p-4 rounded-lg flex-grow overflow-hidden flex flex-col">
+            <h3 class="font-bold mb-2">Logs de génération :</h3>
+            <pre id="logs" class="text-xs text-gray-600 overflow-y-auto flex-grow bg-black text-white p-3 rounded"></pre>
+        </div>
+
+        <div id="videoContainer" class="mt-6 hidden text-center">
+            <h3 class="font-bold text-green-600 mb-2">✅ Video générée avec succès !</h3>
+            <video id="videoPlayer" controls class="mx-auto rounded-lg shadow-lg" style="height: 400px;"></video>
+            <a id="downloadBtn" href="#" download class="inline-block mt-4 text-blue-500 underline">Télécharger la vidéo</a>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let clientId = Math.random().toString(36).substring(7);
+        socket.on('connect', () => {
+            socket.emit('join', clientId);
+        });
+
+        const logsEl = document.getElementById('logs');
+        socket.on('progress', (msg) => {
+            logsEl.textContent += msg + '\n';
+            logsEl.scrollTop = logsEl.scrollHeight;
+        });
+
+        socket.on('error', (err) => {
+            logsEl.textContent += '❌ ERROR: ' + err + '\n';
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const prompt = document.getElementById('promptInput').value;
+            if(!prompt) return alert('Veuillez entrer un prompt.');
+            
+            document.getElementById('progressContainer').classList.remove('hidden');
+            document.getElementById('videoContainer').classList.add('hidden');
+            logsEl.textContent = 'Démarrage de la pipeline...\n';
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.textContent = 'Génération en cours...';
+
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, clientId })
+                });
+                
+                const data = await res.json();
+                
+                if(data.success) {
+                    document.getElementById('videoContainer').classList.remove('hidden');
+                    document.getElementById('videoPlayer').src = data.videoUrl;
+                    document.getElementById('downloadBtn').href = data.videoUrl;
+                } else {
+                    alert('Erreur : ' + data.error);
+                }
+            } catch (err) {
+                alert('Erreur de connexion ' + err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Video';
+            }
+        });
+    </script>
+</body>
+</html>
