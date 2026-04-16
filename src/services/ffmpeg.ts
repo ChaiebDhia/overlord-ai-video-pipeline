@@ -8,7 +8,13 @@ export function runFFmpegCommand(options: {
 }): Promise<void> {
     return new Promise((resolve, reject) => {
         const cmd = ffmpeg();
-        options.inputs.forEach(input => cmd.input(input));
+        options.inputs.forEach(input => {
+            if (input.endsWith('.png') || input.endsWith('.jpg') || input.endsWith('.jpeg')) {
+                cmd.input(input).inputOptions(['-loop', '1', '-framerate', '30']);
+            } else {
+                cmd.input(input);
+            }
+        });
         
         cmd.complexFilter(options.complexFilter)
            .outputOptions(options.outputOptions)

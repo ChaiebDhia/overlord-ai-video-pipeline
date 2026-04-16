@@ -14,7 +14,9 @@ export async function runStep05(context: PipelineContext): Promise<void> {
     const { backgroundPath, characterFrames } = context.visuals;
     const voicePath = context.voice.audioPath;
     const duration = context.voice.durationSeconds;
-    const subtitlesPath = context.subtitles.assFilePath?.replace(/\\/g, '/');
+    // FFmpeg's ass filter on Windows has terrible escaping rules for 'C:/', so we use a relative path
+    const absoluteAss = context.subtitles.assFilePath!;
+    const subtitlesPath = path.relative(process.cwd(), absoluteAss).replace(/\\/g, '/');
     
     const outputPath = path.join(process.env.OUTPUT_DIR || './output', `video_${Date.now()}.mp4`).replace(/\\/g, '/');
     if (!fs.existsSync(path.dirname(outputPath))) fs.mkdirSync(path.dirname(outputPath), { recursive: true });
@@ -83,6 +85,9 @@ export async function runStep05(context: PipelineContext): Promise<void> {
             `-c:a aac`
         ],
         outputPath: outputPath
+    }).catch(e => {
+        console.error("FFMPEG ERROR", JSON.stringify(complexFilters, null, 2));
+        throw e;
     });
 
     context.output = {
