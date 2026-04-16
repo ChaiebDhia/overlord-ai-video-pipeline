@@ -45,17 +45,17 @@ export async function runStep05(context: PipelineContext): Promise<void> {
     if (isSolidColorBg) {
        complexFilters.push(`color=c=yellow:s=1080x1920:d=${Math.ceil(duration)}[bg]`); 
     } else {
-       complexFilters.push(`[0:v]scale=1080:1920[bg]`);
+       complexFilters.push(`[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=10,colorchannelmixer=rr=0.4:gg=0.4:bb=0.4[bg]`);
     }
 
     const closedIdx = isSolidColorBg ? 0 : 1;
     const openIdx = isSolidColorBg ? 1 : 2;
     
     // Lip-Sync Engine: overlaying closed first, then overlay map "open" based on the "ENABLE" timestamps
-    complexFilters.push(`[${closedIdx}:v]scale=800:-1[closed]`);
+    complexFilters.push(`[${closedIdx}:v]scale=1000:-1[closed]`);
     complexFilters.push(`[bg][closed]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2+200[v1]`);
     
-    complexFilters.push(`[${openIdx}:v]scale=800:-1[open]`);
+    complexFilters.push(`[${openIdx}:v]scale=1000:-1[open]`);
     complexFilters.push(`[v1][open]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2+200:enable='${openStr}'[comp_v0]`);
     
     const subtitleFilter = `[comp_v0]ass='${subtitlesPath}'[final_v]`;

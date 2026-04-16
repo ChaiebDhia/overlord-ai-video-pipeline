@@ -42,8 +42,8 @@ export async function runStep03(context: PipelineContext): Promise<void> {
         if (!fs.existsSync(p)) {
             console.warn(`\t> Dummy character asset missing for ${p}, auto-generating a placeholder with FFmpeg.`);
             const color = idx === 0 ? 'brown' : 'yellow'; // Closed=brown, Open=yellow placeholder cubes
-            const text = idx === 0 ? 'Closed' : 'Open';
-            spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', `color=c=${color}:s=400x500`, '-vf', `drawtext=text='${text}':fontcolor=white:fontsize=80:x=(w-text_w)/2:y=(h-text_h)/2`, '-frames:v', '1', p]);
+            const res = spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', `color=c=${color}:s=400x500`, '-frames:v', '1', p]);
+            if (res.status !== 0) console.error("FFMPEG DUMMY ERR", res.stderr?.toString());
         }
     });
     
