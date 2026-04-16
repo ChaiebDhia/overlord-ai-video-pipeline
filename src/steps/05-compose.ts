@@ -52,11 +52,12 @@ export async function runStep05(context: PipelineContext): Promise<void> {
     const openIdx = isSolidColorBg ? 1 : 2;
     
     // Lip-Sync Engine: overlaying closed first, then overlay map "open" based on the "ENABLE" timestamps
-    complexFilters.push(`[${closedIdx}:v]scale=1000:-1[closed]`);
-    complexFilters.push(`[bg][closed]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2+200[v1]`);
+    // We scale down slightly and move up the avatar to the "top of the table" so it remains visible
+    complexFilters.push(`[${closedIdx}:v]scale=800:-1[closed]`);
+    complexFilters.push(`[bg][closed]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2-150[v1]`);
     
-    complexFilters.push(`[${openIdx}:v]scale=1000:-1[open]`);
-    complexFilters.push(`[v1][open]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2+200:enable='${openStr}'[comp_v0]`);
+    complexFilters.push(`[${openIdx}:v]scale=800:-1[open]`);
+    complexFilters.push(`[v1][open]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2-150:enable='${openStr}'[comp_v0]`);
     
     const subtitleFilter = `[comp_v0]ass='${subtitlesPath}'[final_v]`;
     complexFilters.push(subtitleFilter);
