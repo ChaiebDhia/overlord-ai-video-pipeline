@@ -29,7 +29,7 @@ export async function generateScriptLLM(prompt: string, provider: 'openai' | 'an
           baseURL: useGroq ? "https://api.groq.com/openai/v1" : "https://api.openai.com/v1"
       });
       const response = await openai.chat.completions.create({
-        model: useGroq ? 'llama3-8b-8192' : 'gpt-4o',
+        model: useGroq ? 'llama-3.1-8b-instant' : 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }

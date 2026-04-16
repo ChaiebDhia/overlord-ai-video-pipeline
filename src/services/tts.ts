@@ -9,7 +9,7 @@ export async function generateAudio(text: string, outputPath: string, voice: str
     // Si ElevenLabs est configuré (Totalement gratuit pour 10 000 chars/mois sans carte bancaire)
     if (process.env.ELEVENLABS_API_KEY) {
         console.log("Utilisation de ElevenLabs TTS (Gratuit)");
-        const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/pFZP5JQG7iQjIQuC4Bku', { // Voix Lily/Picsou-like ou similaire
+        const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb', { 
             method: 'POST',
             headers: {
                 'xi-api-key': process.env.ELEVENLABS_API_KEY,
@@ -17,7 +17,7 @@ export async function generateAudio(text: string, outputPath: string, voice: str
             },
             body: JSON.stringify({
                 text: text,
-                model_id: "eleven_monolingual_v1",
+                model_id: "eleven_multilingual_v2",
                 voice_settings: {
                     stability: 0.5,
                     similarity_boost: 0.5
@@ -26,7 +26,8 @@ export async function generateAudio(text: string, outputPath: string, voice: str
         });
 
         if (!response.ok) {
-            throw new Error(`ElevenLabs Error: ${response.statusText}`);
+            const errText = await response.text();
+            throw new Error(`ElevenLabs Error: ${response.statusText} - ${errText}`);
         }
         
         const buffer = Buffer.from(await response.arrayBuffer());
