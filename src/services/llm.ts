@@ -22,9 +22,14 @@ export async function generateScriptLLM(prompt: string, provider: 'openai' | 'an
 
   return withRetry(async () => {
     if (provider === 'openai') {
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const useGroq = !!process.env.GROQ_API_KEY;
+      const apiKey = useGroq ? process.env.GROQ_API_KEY! : process.env.OPENAI_API_KEY!;
+      const openai = new OpenAI({ 
+          apiKey: apiKey,
+          baseURL: useGroq ? "https://api.groq.com/openai/v1" : "https://api.openai.com/v1"
+      });
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: useGroq ? 'llama3-8b-8192' : 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }

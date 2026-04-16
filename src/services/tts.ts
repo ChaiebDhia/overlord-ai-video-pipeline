@@ -6,9 +6,46 @@ dotenv.config();
 
 export async function generateAudio(text: string, outputPath: string, voice: string = 'onyx'): Promise<string> {
   return withRetry(async () => {
+    // Si ElevenLabs est configuré (Totalement gratuit pour 10 000 chars/mois sans carte bancaire)
+    if (process.env.ELEVENLABS_API_KEY) {
+        console.log("Utilisation de ElevenLabs TTS (Gratuit)");
+        const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/pFZP5JQG7iQjIQuC4Bku', { // Voix Lily/Picsou-like ou similaire
+            method: 'POST',
+            headers: {
+                'xi-api-key': process.env.ELEVENLABS_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: text,
+                model_id: "eleven_monolingual_v1",
+                voice_settings: {
+                    stability: 0.5,
+                    similarity_boost: 0.5
+                }
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`ElevenLabs Error: ${response.statusText}`);
+        }
+        
+        const buffer = Buffer.from(await response.arrayBuffer());
+        if (buffer.byteLength < 100) {
+            throw new Error('ElevenLabs generated audio is suspiciously small.');
+        }
+        fs.writeFileSync(outputPath, buffer);
+        return outputPath;
+    }
+
+    // Sinon Fallback vers OpenAI (Si facturé / compte premium)
+    if (!process.env.OPENAI_API_KEY) {
+        throw new Error("Aucune clé TTS disponible (Ni ELEVENLABS_API_KEY ni OPENAI_API_KEY).");
+    }
+    
+    console.log("Utilisation de OpenAI TTS");
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const response = await openai.audio.speech.create({
-      model: 'tts-1-hd',
+      model: 'tts-1', // Remplacé hd par normal (plus tolérant)
       voice: voice as any,
       input: text,
     });
